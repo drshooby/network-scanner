@@ -1,1 +1,1 @@
-pub mod outward_ip;
+pub mod ip_resolve;
