@@ -1,0 +1,25 @@
+# Rust build artifacts
+/target/
+
+# Cargo lock file (if you prefer not to commit it)
+# Cargo.lock
+
+# Rust compiler's intermediate files
+*.d
+*.o
+*.a
+*.rlib
+
+# The configuration file for Cargo's registry (caches)
+/cargo-cache/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Rust-specific IDE config files
+/.cargo/
