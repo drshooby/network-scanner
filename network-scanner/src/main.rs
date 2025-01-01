@@ -4,7 +4,7 @@ use crate::utilities::ip_resolve;
 mod utilities;
 
 fn main() {
-    let my_ip = match ip_resolve::outward_ip() {
+    let my_ip = match ip_resolve::outbound_ip() {
         Ok(ip) => ip,
         Err(e) => {
             println!("Error: {e}");
