@@ -1,5 +1,5 @@
 # Rust build artifacts
-/target/
+/network-scanner/target
 
 # Cargo lock file (if you prefer not to commit it)
 # Cargo.lock
