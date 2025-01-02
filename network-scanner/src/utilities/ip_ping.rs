@@ -38,7 +38,10 @@ pub(crate) async fn check_active_ips(ips: Vec<IpInfo>, client: Client) -> Result
         }
     })).await;
 
-    let active_ips: Vec<IpInfo> = ping_results.into_iter().flatten().collect();  // `.flatten()` removes `None` values
+    let active_ips: Vec<IpInfo> = ping_results
+        .into_iter()
+        .flatten()
+        .collect();
 
     Ok(active_ips)
 }
