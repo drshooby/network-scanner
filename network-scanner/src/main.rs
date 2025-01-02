@@ -1,5 +1,6 @@
 use std::process::exit;
-use crate::utilities::ip_resolve;
+use crate::utilities::{ip_resolve};
+use crate::utilities::ip_resolve::get_ip_info;
 
 mod utilities;
 
@@ -12,20 +13,9 @@ fn main() {
         }
     };
 
-    let ip_class = match ip_resolve::classify_ip(my_ip) {
-        ip_resolve::IpClass::A => "A",
-        ip_resolve::IpClass::B => "B",
-        ip_resolve::IpClass::C => "C",
-        _ => "Unknown",
-    };
+    match get_ip_info(my_ip) { 
+        Ok(ip) => println!("Ip: {}, Class: {}, Visibility: {}", ip.ip, ip.class.as_ref(), ip.visibility.as_ref()),
+        Err(e) => println!("Error: {e}")
+    }
 
-    let is_private = match ip_resolve::is_private_ip(my_ip) {
-        Ok(is_private) => is_private,
-        Err(e) => {
-            println!("Error: {e}");
-            exit(1);
-        }
-    };
-
-    println!("My IP is: {my_ip}, class {ip_class}, is private: {is_private}");
 }

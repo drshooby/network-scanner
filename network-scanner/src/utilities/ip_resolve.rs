@@ -1,5 +1,7 @@
 use std::net::{IpAddr, UdpSocket};
+use strum_macros::AsRefStr;
 
+#[derive(AsRefStr)]
 pub enum IpClass {
     A,
     B,
@@ -7,6 +9,7 @@ pub enum IpClass {
     Unknown,
 }
 
+#[derive(AsRefStr)]
 pub enum IpVisStatus {
     Public,
     Private,
@@ -14,6 +17,12 @@ pub enum IpVisStatus {
     Unknown,
 }
 
+pub struct IpInfo {
+    // just for testing, otherwise keep private
+    pub visibility: IpVisStatus,
+    pub class: IpClass,
+    pub ip: IpAddr,
+}
 pub(crate) fn outbound_ip() -> Result<IpAddr, String> {
     let google_ipv4: &str = "8.8.8.8:443";
     let wildcard_ipv4 = "0.0.0.0:0";
@@ -57,23 +66,31 @@ fn get_c_class_visibility(octets: Vec<u8>) -> IpVisStatus {
     if octets[0] == 192 && octets[1] == 168 { IpVisStatus::Private } else { IpVisStatus::Public }
 }
 
-pub(crate) fn is_private_ip(ip: IpAddr) -> Result<IpVisStatus, String> {
+pub(crate) fn get_ip_info(ip: IpAddr) -> Result<IpInfo, String> {
     let ip_class: IpClass = classify_ip(ip);
     let octets: Vec<u8> = ip.to_string()
         .split('.')
         .map(|v| v.parse::<u8>().map_err(|_| format!("Could not parse octet: {v}")))
         .collect::<Result<Vec<u8>, _>>()?;
-    
-    if octets[0] == 127 { 
-        return Ok(IpVisStatus::Loopback); 
+
+    if octets[0] == 127 {
+        return Ok(IpInfo {
+            visibility: IpVisStatus::Loopback,
+            class: ip_class,
+            ip,
+        });
     }
 
-    let status = match ip_class {
+    let vis_status = match ip_class {
         IpClass::A => get_a_class_visibility(octets),
         IpClass::B => get_b_class_visibility(octets),
         IpClass::C => get_c_class_visibility(octets),
         _ => IpVisStatus::Unknown,
     };
-    
-    Ok(status)
+
+    Ok(IpInfo {
+        visibility: vis_status,
+        class: ip_class,
+        ip,
+    })
 }
