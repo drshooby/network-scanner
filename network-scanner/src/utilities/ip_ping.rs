@@ -2,30 +2,28 @@ use futures::future::join_all;
 use std::net::IpAddr;
 use std::time::Duration;
 use surge_ping::{Client, PingIdentifier, PingSequence};
+use rand::random;
+use tokio::time::interval;
 use crate::utilities::ip_resolve::IpInfo;
 
 async fn ping(dest: IpAddr, client: &Client) -> Result<(), Box<dyn std::error::Error>> {
-    let ip = tokio::net::lookup_host(format!("{}:0", dest))
-        .await
-        .expect("host lookup error")
-        .next()
-        .map(|val| val.ip())
-        .unwrap();
-    
-    let payload = vec![0; 64];
-    
-    let mut pinger = client.pinger(ip, PingIdentifier(111)).await;
 
-    pinger.timeout(Duration::from_secs(5));
+    let payload = vec![0; 56];
 
-    match pinger.ping(PingSequence(0), &payload).await {
-        Ok((_packet, _rtt)) => {
-            Ok(())
-        }
-        Err(e) => {
-            Err(Box::new(e))
+    let mut pinger = client.pinger(dest, PingIdentifier(random())).await;
+
+    pinger.timeout(Duration::from_secs(1));
+    let mut interval = interval(Duration::from_secs(1));
+    for i in 0..5 {
+        interval.tick().await;
+        match pinger.ping(PingSequence(i), &payload).await {
+            Ok((_packet, _rtt)) => {
+                return Ok(());
+            }
+            Err(_) => {},
         }
     }
+    Err("Ping timed out".into())
 }
 
 pub(crate) async fn check_active_ips(ips: Vec<IpInfo>, client: Client) -> Result<Vec<IpInfo>, Box<dyn std::error::Error>> {
