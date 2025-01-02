@@ -73,7 +73,7 @@ pub(crate) fn get_ip_info(ip: IpAddr) -> Result<IpInfo, String> {
         .map(|v| v.parse::<u8>().map_err(|_| format!("Could not parse octet: {v}")))
         .collect::<Result<Vec<u8>, _>>()?;
 
-    if octets[0] == 127 {
+    if ip.is_loopback() {
         return Ok(IpInfo {
             visibility: IpVisStatus::Loopback,
             class: ip_class,
