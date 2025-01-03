@@ -17,11 +17,11 @@ async fn main() {
     };
 
     let ip_info = get_ip_info(my_ip).unwrap();
-    let ips = generate_ips(ip_info).unwrap();
+    let ip_range_it = generate_ips(ip_info).unwrap();
     
     let client_v4 = Client::new(&Config::default()).unwrap();
     
-    match ip_ping::check_active_ips(ips, client_v4).await { 
+    match ip_ping::check_active_ips(ip_range_it, client_v4).await { 
         Ok(active_ips) => {
             println!("Total ips found: {}", active_ips.len());
             for ip in active_ips {
