@@ -46,8 +46,8 @@ async fn resolve_hostname(ip: IpAddr) -> Result<Address, String> {
     }
 }
 
-pub(crate) async fn check_active_ips(ips: Vec<IpInfo>, client: Client) -> Result<Vec<Address>, Box<dyn std::error::Error>> {
-    let ping_results = join_all(ips.into_iter().map(|ip_info| {
+pub(crate) async fn check_active_ips<I>(ip_range_it: I, client: Client) -> Result<Vec<Address>, Box<dyn std::error::Error>> where I: Iterator<Item = IpInfo> {
+    let ping_results = join_all(ip_range_it.map(|ip_info| {
         let ip = ip_info.ip;
         let client = client.clone();
         async move {
