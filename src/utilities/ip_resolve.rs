@@ -13,13 +13,11 @@ pub enum IpClass {
 pub enum IpVisStatus {
     Public,
     Private,
-    Loopback,
     Unknown,
 }
 
 pub struct IpInfo {
     // just for testing, otherwise keep private
-    pub visibility: IpVisStatus,
     pub class: IpClass,
     pub ip: IpAddr,
 }
@@ -75,13 +73,12 @@ pub(crate) fn get_ip_info(ip: IpAddr) -> Result<IpInfo, String> {
 
     if ip.is_loopback() {
         return Ok(IpInfo {
-            visibility: IpVisStatus::Loopback,
             class: ip_class,
             ip,
         });
     }
 
-    let vis_status = match ip_class {
+    match ip_class {
         IpClass::A => get_a_class_visibility(octets),
         IpClass::B => get_b_class_visibility(octets),
         IpClass::C => get_c_class_visibility(octets),
@@ -89,7 +86,6 @@ pub(crate) fn get_ip_info(ip: IpAddr) -> Result<IpInfo, String> {
     };
 
     Ok(IpInfo {
-        visibility: vis_status,
         class: ip_class,
         ip,
     })
