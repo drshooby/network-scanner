@@ -1,12 +1,18 @@
+use crate::utilities::ip_resolve::IpInfo;
+use dns_lookup::lookup_addr;
 use futures::future::join_all;
+use rand::random;
 use std::net::IpAddr;
 use std::time::Duration;
 use surge_ping::{Client, PingIdentifier, PingSequence};
-use rand::random;
 use tokio::time::interval;
-use crate::utilities::ip_resolve::IpInfo;
 
-async fn ping(dest: IpAddr, client: &Client) -> Result<(), Box<dyn std::error::Error>> {
+pub struct Address {
+    pub ip: IpAddr,
+    pub hostname: String,
+}
+
+async fn ping(dest: IpAddr, client: &Client) -> Result<Address, Box<dyn std::error::Error>> {
 
     let payload = vec![0; 56];
 
@@ -18,7 +24,7 @@ async fn ping(dest: IpAddr, client: &Client) -> Result<(), Box<dyn std::error::E
         interval.tick().await;
         match pinger.ping(PingSequence(i), &payload).await {
             Ok((_packet, _rtt)) => {
-                return Ok(());
+                return resolve_hostname(dest).await.map_err(|e| e.into());
             }
             Err(_) => {},
         }
@@ -26,19 +32,30 @@ async fn ping(dest: IpAddr, client: &Client) -> Result<(), Box<dyn std::error::E
     Err("Ping timed out".into())
 }
 
-pub(crate) async fn check_active_ips(ips: Vec<IpInfo>, client: Client) -> Result<Vec<IpInfo>, Box<dyn std::error::Error>> {
+async fn resolve_hostname(ip: IpAddr) -> Result<Address, String> {
+    let result = tokio::task::spawn_blocking(move || lookup_addr(&ip)).await;
+    match result {
+        Ok(Ok(name)) => Ok(Address {
+            ip,
+            hostname: name
+        }),
+        _ => Ok(Address {
+            ip,
+            hostname: "N/A".to_string()
+        })
+    }
+}
+
+pub(crate) async fn check_active_ips(ips: Vec<IpInfo>, client: Client) -> Result<Vec<Address>, Box<dyn std::error::Error>> {
     let ping_results = join_all(ips.into_iter().map(|ip_info| {
         let ip = ip_info.ip;
         let client = client.clone();
         async move {
-            match ping(ip, &client).await {
-                Ok(_) => Some(ip_info),
-                Err(_) => None,
-            }
+            ping(ip, &client).await.ok()
         }
     })).await;
 
-    let active_ips: Vec<IpInfo> = ping_results
+    let active_ips: Vec<Address> = ping_results
         .into_iter()
         .flatten()
         .collect();

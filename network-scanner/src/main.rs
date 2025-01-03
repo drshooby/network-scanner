@@ -26,10 +26,10 @@ async fn main() {
             println!("Total ips found: {}", active_ips.len());
             for ip in active_ips {
                 if ip.ip == my_ip { 
-                    println!("{} -> me", ip.ip);
+                    println!("Address: {}, Name {} -> Me", ip.ip, ip.hostname);
                     continue; 
                 }
-                println!("{} is active", ip.ip);
+                println!("Address: {}, Name {}", ip.ip, ip.hostname);
             }
         }
         Err(e) => {
