@@ -1,6 +1,6 @@
 use std::net::{Ipv4Addr};
 use std::str::FromStr;
-use crate::utilities::ip_resolve::{get_ip_info, IpClass, IpInfo};
+use crate::utilities::resolve::{get_ip_info, IpClass, IpInfo};
 use ipnet::{IpAddrRange, Ipv4AddrRange};
 
 fn get_ips_from_range(start: String, end: String) -> Vec<IpInfo> {

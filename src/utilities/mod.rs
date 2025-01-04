@@ -1,3 +1,3 @@
-pub mod ip_resolve;
-pub mod ip_generate;
-pub mod ip_ping;
+pub mod resolve;
+pub mod generate_ips;
+pub mod ping;

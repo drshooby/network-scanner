@@ -1,4 +1,4 @@
-use crate::utilities::ip_resolve::IpInfo;
+use crate::utilities::resolve::IpInfo;
 use dns_lookup::lookup_addr;
 use futures::future::join_all;
 use rand::random;
@@ -13,36 +13,29 @@ pub struct Address {
 }
 
 async fn ping(dest: IpAddr, client: &Client) -> Result<Address, Box<dyn std::error::Error>> {
-
     let payload = vec![0; 56];
 
     let mut pinger = client.pinger(dest, PingIdentifier(random())).await;
-
     pinger.timeout(Duration::from_secs(1));
+
     let mut interval = interval(Duration::from_secs(1));
     for i in 0..5 {
         interval.tick().await;
-        match pinger.ping(PingSequence(i), &payload).await {
-            Ok((_packet, _rtt)) => {
-                return resolve_hostname(dest).await.map_err(|e| e.into());
-            }
-            Err(_) => {},
+        if let Ok((_packet, _rtt)) = pinger.ping(PingSequence(i), &payload).await {
+            let hostname = resolve_hostname(dest).await;
+            return Ok(Address {
+                ip: dest,
+                hostname,
+            });
         }
     }
     Err("Ping timed out".into())
 }
 
-async fn resolve_hostname(ip: IpAddr) -> Result<Address, String> {
-    let result = tokio::task::spawn_blocking(move || lookup_addr(&ip)).await;
-    match result {
-        Ok(Ok(name)) => Ok(Address {
-            ip,
-            hostname: name
-        }),
-        _ => Ok(Address {
-            ip,
-            hostname: "N/A".to_string()
-        })
+async fn resolve_hostname(ip: IpAddr) -> String {
+    match tokio::task::spawn_blocking(move || lookup_addr(&ip)).await {
+        Ok(Ok(name)) => name,
+        _ => String::from("N/A")
     }
 }
 

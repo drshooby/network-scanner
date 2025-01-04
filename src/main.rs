@@ -1,14 +1,14 @@
 use std::process::exit;
 use surge_ping::{Client, Config};
-use crate::utilities::{ip_ping, ip_resolve};
-use crate::utilities::ip_generate::generate_ips;
-use crate::utilities::ip_resolve::get_ip_info;
+use crate::utilities::{ping, resolve};
+use crate::utilities::generate_ips::generate_ips;
+use crate::utilities::resolve::get_ip_info;
 
 mod utilities;
 
 #[tokio::main]
 async fn main() {
-    let my_ip = match ip_resolve::outbound_ip() {
+    let my_ip = match resolve::outbound_ip() {
         Ok(ip) => ip,
         Err(e) => {
             println!("Error: {e}");
@@ -21,7 +21,7 @@ async fn main() {
     
     let client_v4 = Client::new(&Config::default()).unwrap();
     
-    match ip_ping::check_active_ips(ip_range_it, client_v4).await { 
+    match ping::check_active_ips(ip_range_it, client_v4).await { 
         Ok(active_ips) => {
             println!("Total ips found: {}", active_ips.len());
             for ip in active_ips {
