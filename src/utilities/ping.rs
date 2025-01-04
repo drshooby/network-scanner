@@ -12,7 +12,7 @@ pub struct Address {
     pub hostname: String,
 }
 
-async fn ping(dest: IpAddr, client: &Client) -> Result<Address, Box<dyn std::error::Error>> {
+async fn ping(dest: IpAddr, client: &Client) -> Option<Address> {
     let payload = vec![0; 56];
 
     let mut pinger = client.pinger(dest, PingIdentifier(random())).await;
@@ -23,13 +23,13 @@ async fn ping(dest: IpAddr, client: &Client) -> Result<Address, Box<dyn std::err
         interval.tick().await;
         if let Ok((_packet, _rtt)) = pinger.ping(PingSequence(i), &payload).await {
             let hostname = resolve_hostname(dest).await;
-            return Ok(Address {
+            return Some(Address {
                 ip: dest,
                 hostname,
             });
         }
     }
-    Err("Ping timed out".into())
+    None
 }
 
 async fn resolve_hostname(ip: IpAddr) -> String {
@@ -44,7 +44,7 @@ pub(crate) async fn check_active_ips<I>(ip_range_it: I, client: Client) -> Resul
         let ip = ip_info.ip;
         let client = client.clone();
         async move {
-            ping(ip, &client).await.ok()
+            ping(ip, &client).await
         }
     })).await;
 
