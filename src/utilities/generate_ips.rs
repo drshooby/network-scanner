@@ -19,28 +19,21 @@ fn get_ips_from_range(start: String, end: String) -> Vec<IpInfo> {
     ips
 }
 
-pub(crate) fn generate_ips(ip_info: IpInfo) -> Result<impl Iterator<Item = IpInfo>, String> {
-    
-    let is_default_scan = match ip_info.class {
-        IpClass::A | IpClass::B => false,
-        IpClass::C => true,
-        _ => return Err(String::from("Unknown class")),
-    };
-
-    let base = ip_info.ip
-        .to_string()
-        .rsplitn(2, '.')
-        .last()
-        .unwrap_or("0.0.0")
-        .to_string();
-
-    if is_default_scan {
-        let ips = get_ips_from_range(
-            format!("{}.1", base),
-            format!("{}.254", base),
-        );
-        return Ok(ips.into_iter());
+pub(crate) fn generate_ips(ip_info: IpInfo) -> Option<impl Iterator<Item = IpInfo>> {
+    match ip_info.class {
+        IpClass::C => {
+            let base = ip_info.ip
+                .to_string()
+                .rsplitn(2, '.')
+                .last()
+                .unwrap_or("0.0.0")
+                .to_string();
+            
+            Some(get_ips_from_range(
+                format!("{}.1", base),
+                format!("{}.254", base)
+            ).into_iter())
+        }
+        _ => { None }
     }
-
-    Err(String::from("Unable to generate ips"))
 }

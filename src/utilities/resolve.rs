@@ -3,8 +3,6 @@ use strum_macros::AsRefStr;
 
 #[derive(AsRefStr)]
 pub enum IpClass {
-    A,
-    B,
     C,
     Unknown,
 }
@@ -45,19 +43,9 @@ pub(crate) fn classify_ip(ip: IpAddr) -> IpClass {
     let first_octet = ip.to_string().split('.').next().unwrap_or("0").parse::<u8>().unwrap_or(0);
 
     match first_octet {
-        1..=127 => IpClass::A,
-        128..=191 => IpClass::B,
         192..=223 => IpClass::C,
         _ => IpClass::Unknown,
     }
-}
-
-fn get_a_class_visibility(octets: Vec<u8>) -> IpVisStatus {
-    if octets[0] == 10 { IpVisStatus::Private } else { IpVisStatus::Public }
-}
-
-fn get_b_class_visibility(octets: Vec<u8>) -> IpVisStatus {
-    if octets[0] == 172 && (octets[1] >= 16 && octets[1] <= 31) { IpVisStatus::Private } else { IpVisStatus::Public }
 }
 
 fn get_c_class_visibility(octets: Vec<u8>) -> IpVisStatus {
@@ -79,8 +67,6 @@ pub(crate) fn get_ip_info(ip: IpAddr) -> Result<IpInfo, String> {
     }
 
     match ip_class {
-        IpClass::A => get_a_class_visibility(octets),
-        IpClass::B => get_b_class_visibility(octets),
         IpClass::C => get_c_class_visibility(octets),
         _ => IpVisStatus::Unknown,
     };
